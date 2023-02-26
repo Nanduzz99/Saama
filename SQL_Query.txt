@@ -1,0 +1,36 @@
+BEGIN TRANSACTION
+
+-- Insert new rows from input dataset
+INSERT INTO target_table (col1, col2, col3, flag)
+SELECT col1, col2, col3, 'I'
+FROM input_dataset
+WHERE NOT EXISTS (
+    SELECT *
+    FROM target_table 
+    WHERE target_table.primary_key = input_dataset.primary_key
+)
+
+-- Update existing rows with changes from input dataset
+UPDATE target_table 
+SET col1 = input_dataset.col1, 
+    col2 = input_dataset.col2, 
+    col3 = input_dataset.col3, 
+    flag = 'U'
+FROM input_dataset 
+WHERE target_table.primary_key = input_dataset.primary_key 
+  AND (
+    target_table.col1 <> input_dataset.col1 
+    OR target_table.col2 <> input_dataset.col2 
+    OR target_table.col3 <> input_dataset.col3
+)
+
+-- Delete rows from target table that are not in input dataset
+UPDATE FROM target_tabl 
+SET flag = 'D'
+WHERE NOT EXISTS (
+    SELECT *
+    FROM input_dataset 
+    WHERE input_dataset.primary_key = target_table.primary_key
+)
+
+COMMIT TRANSACTION
